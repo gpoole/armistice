@@ -8,13 +8,44 @@ public class SalvageShip : MonoBehaviour {
 
 	protected bool thrusting;
 	
-	void Start () {
+	public float fuel;
 
+	public float maxFuel;
+
+	public float damage;
+
+	public float maxDamage;
+
+	public Sprite normalSprite;
+
+	public Sprite burnSprite;
+
+	protected ParticleSystem smokeEffect;
+
+	protected SpriteRenderer spriteRenderer;
+
+	void Start () {
+		smokeEffect = GameObject.Find ("WhiteSmoke").GetComponent<ParticleSystem>();
+		spriteRenderer = GetComponent<SpriteRenderer> ();
 	}
 
 	void Update () {
-		if (thrusting) {
+
+		// Show effects and apply forces depending on whether we're thrusting or not
+		if (thrusting && fuel > 0) {
+			// Actually apply the thrust force
 			rigidbody2D.AddForce (thrust);
+			fuel -= .025f * thrust.magnitude;
+
+			if(!smokeEffect.isPlaying) {
+				smokeEffect.Play();
+			}
+			spriteRenderer.sprite = burnSprite;
+		} else {
+			if(smokeEffect.isPlaying) {
+				smokeEffect.Stop();
+			}
+			spriteRenderer.sprite = normalSprite;
 		}
 
 		// Press left mouse button
@@ -26,6 +57,8 @@ public class SalvageShip : MonoBehaviour {
 			// based on how far away the mouse is (up to 2 units)
 			thrust = Vector2.ClampMagnitude((Vector2)projectedMousePoint - rigidbody2D.position, 2f);
 			thrusting = true;
+
+			rigidbody2D.angularVelocity = 0;
 		}
 
 		// Stop thrusting when left button is released
