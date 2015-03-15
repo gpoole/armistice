@@ -20,6 +20,10 @@ public class SalvageShip : MonoBehaviour {
 
 	public Sprite burnSprite;
 
+	public GameObject attachedTo;
+
+	protected GameObject tractorBeam;
+
 	protected ParticleSystem smokeEffect;
 
 	protected SpriteRenderer spriteRenderer;
@@ -27,6 +31,8 @@ public class SalvageShip : MonoBehaviour {
 	void Start () {
 		smokeEffect = GameObject.Find ("WhiteSmoke").GetComponent<ParticleSystem>();
 		spriteRenderer = GetComponent<SpriteRenderer> ();
+
+		tractorBeam = GameObject.Find ("TractorBeam");
 	}
 
 	void Update () {
@@ -48,6 +54,34 @@ public class SalvageShip : MonoBehaviour {
 			spriteRenderer.sprite = normalSprite;
 		}
 
+		SpringJoint2D joint = GetComponent<SpringJoint2D> ();
+
+		if (attachedTo) {
+			float distanceToAttachment = Vector3.Distance (attachedTo.transform.position, transform.position);
+
+			if (!tractorBeam.particleSystem.isPlaying) {
+				tractorBeam.particleSystem.Play ();
+			}
+
+			if (!joint.enabled) {
+				joint.enabled = true;
+				joint.connectedBody = attachedTo.rigidbody2D;
+				joint.distance = distanceToAttachment;
+			}
+
+			tractorBeam.transform.position = new Vector3 (attachedTo.transform.position.x, attachedTo.transform.position.y, tractorBeam.transform.position.z);
+			tractorBeam.transform.LookAt (transform.position);
+			tractorBeam.particleSystem.startLifetime = distanceToAttachment / tractorBeam.particleSystem.startSpeed;
+		} else {
+			if(tractorBeam.particleSystem.isPlaying) {
+				tractorBeam.particleSystem.Stop();
+			}
+
+			if(joint.enabled) {
+				joint.enabled = false;
+			}
+		}
+		 
 		// Press left mouse button
 		if (Input.GetMouseButtonDown (0)) {
 			// Calculate where the mouse was clicked in the game world
@@ -64,6 +98,12 @@ public class SalvageShip : MonoBehaviour {
 		// Stop thrusting when left button is released
 		if (Input.GetMouseButtonUp (0)) {
 			thrusting = false;
+		}
+
+		if (Input.GetKey (KeyCode.Space)) {
+			attachedTo = GameObject.Find ("ship_piece_4");
+		} else {
+			attachedTo = null;
 		}
 	}
 
